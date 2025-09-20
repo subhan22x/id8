@@ -43,8 +43,9 @@ export default function NameBuilder() {
 
   const activeStyle = pendantStyles.find(style => style.id === styleId) ?? pendantStyles[0];
 
-  const canAddLine = lines.length < 3;
+  const canAddLine = lines.length < 2;
   const secondaryDisabled = goldMode === "solid";
+  const hasPrimaryName = lines[0]?.trim().length > 0;
 
   const updateLine = (value: string, index: number) => {
     setLines(prev => prev.map((entry, idx) => (idx === index ? value : entry)));
@@ -56,6 +57,10 @@ export default function NameBuilder() {
     }
   };
 
+  const removeLine = (index: number) => {
+    setLines(prev => prev.filter((_, idx) => idx !== index));
+  };
+
   const handleBack = () => {
     if (step === 0) {
       router.push("/");
@@ -65,10 +70,15 @@ export default function NameBuilder() {
   };
 
   const handleNext = () => {
+    if (step === 0 && !hasPrimaryName) {
+      return;
+    }
     if (step < stepLabels.length - 1) {
       setStep(prev => ((prev + 1) as Step));
     }
   };
+
+  const isNextDisabled = step === 0 && !hasPrimaryName;
 
   return (
     <main className="min-h-dvh px-4 py-10 text-white md:px-8">
@@ -107,16 +117,28 @@ export default function NameBuilder() {
                           placeholder={index === 0 ? "your name..." : "add another line"}
                           className="flex-1 rounded-2xl border border-white/15 bg-black/45 px-4 py-3 text-base outline-none transition focus:border-white/40"
                         />
-                        {index === lines.length - 1 && canAddLine && (
-                          <button
-                            type="button"
-                            onClick={addLine}
-                            className="h-11 w-11 rounded-2xl border border-white/15 bg-black/60 text-2xl font-semibold leading-none text-white/80 transition hover:border-white/40"
-                            aria-label="Add another line"
-                          >
-                            +
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {lines.length > 1 && index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => removeLine(index)}
+                              className="h-11 w-11 rounded-2xl border border-white/15 bg-black/60 text-2xl font-semibold leading-none text-white/80 transition hover:border-white/40"
+                              aria-label="Remove name line"
+                            >
+                              -
+                            </button>
+                          )}
+                          {index === lines.length - 1 && canAddLine && (
+                            <button
+                              type="button"
+                              onClick={addLine}
+                              className="h-11 w-11 rounded-2xl border border-white/15 bg-black/60 text-2xl font-semibold leading-none text-white/80 transition hover:border-white/40"
+                              aria-label="Add another line"
+                            >
+                              +
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -173,6 +195,7 @@ export default function NameBuilder() {
                     onClick={() => setIncludeEmblem(value => !value)}
                     className={`relative h-7 w-12 rounded-full border border-white/15 transition ${includeEmblem ? "bg-blue-500/80" : "bg-black/50"}`}
                     aria-pressed={includeEmblem}
+                    aria-label="Toggle emblem"
                   >
                     <span
                       className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white transition ${includeEmblem ? "left-6" : "left-1"}`}
@@ -315,7 +338,9 @@ export default function NameBuilder() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="rounded-full border border-blue-500 bg-blue-500/20 px-4 py-2 text-sm uppercase tracking-wide text-blue-100 transition hover:bg-blue-500/30"
+                disabled={isNextDisabled}
+                aria-disabled={isNextDisabled}
+                className={`rounded-full border px-4 py-2 text-sm uppercase tracking-wide transition ${isNextDisabled ? "cursor-not-allowed border-white/20 bg-white/5 text-white/40" : "border-blue-500 bg-blue-500/20 text-blue-100 hover:bg-blue-500/30"}`}
               >
                 next
               </button>
