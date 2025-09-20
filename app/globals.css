@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --grad: linear-gradient(180deg, #A28547 0%, #89500F 8%, #4D300F 18%, #000000 61%, #000000 100%);
+}
+body { color: white; background: var(--grad); }
+.card { border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,.35); background: rgba(0,0,0,.85); border: 1px solid rgba(255,255,255,.1); }
