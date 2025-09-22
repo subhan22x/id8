@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import EmblemPicker from "./components/EmblemPicker";
 import { pendantStyles, emblems, type PendantStyle } from "@/lib/assets";
 
 type GoldTone = "yg" | "rg" | "wg";
-type Step = 0 | 1 | 2;
+type Step = 0 | 1 | 2 | 3 | 4;
 
-const STEP_LABELS: readonly string[] = ["Name 1", "Name 2", "Name 3"];
+const STEP_LABELS: readonly string[] = ["Name 1", "Name 2", "Name 3", "Name 5", "Name 6"];
+const TYPICAL_SECONDS = 20;
 const MAX_NAME_LINES = 2; // limit for inputs on the first step
 const goldToneMeta: Record<GoldTone, { label: string; from: string; to: string }> = {
   yg: { label: "Yellow gold", from: "#F8DC8B", to: "#C78A29" },
@@ -42,9 +43,23 @@ export default function NameBuilder() {
   const [primaryTone, setPrimaryTone] = useState<GoldTone>("yg");
   const [secondaryTone, setSecondaryTone] = useState<GoldTone>("rg");
   const [diamondQuality, setDiamondQuality] = useState<"vs" | "vvs">("vvs");
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
+  const [selectedGenerationId, setSelectedGenerationId] = useState<string | null>(null);
+
+  const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const pendantColumns = buildPendantColumns(pendantStyles); // update lib/assets.ts to add/remove styles
   const activeStyle = pendantStyles.find(style => style.id === styleId) ?? pendantStyles[0];
+
+  const generationPlaceholders = useMemo(() => [
+    { id: "draft-1", label: "Draft 1", src: "/samples/Gemini_Generated_Image_7tlquz7tlquz7tlq.png" },
+    { id: "draft-2", label: "Draft 2", src: "/samples/Gemini_Generated_Image_a8vnkga8vnkga8vn.png" },
+    { id: "draft-3", label: "Draft 3", src: "/samples/JWAE-Custom-Moissanite-Name-Pendant-14K-Gold-icecartel-white.png" },
+    { id: "draft-4", label: "Draft 4", src: "/samples/King slanted.png" }
+  ], []);
+
+  const activeGenerations = useMemo(() => generationPlaceholders, [generationPlaceholders]);
 
   const selectedEmblem = emblemId ? emblems.find(asset => asset.id === emblemId) ?? null : null;
   const emblemSummary = includeEmblem ? (selectedEmblem ? selectedEmblem.label : "None selected") : "Not included";
@@ -87,16 +102,74 @@ export default function NameBuilder() {
     if (step === 0 && !hasPrimaryName) {
       return;
     }
-    if (step < STEP_LABELS.length - 1) {
-      setStep(prev => ((prev + 1) as Step));
+    if (step > 1) {
+      return;
     }
+    setStep(prev => ((prev + 1) as Step));
   };
 
   const isNextDisabled = step === 0 && !hasPrimaryName;
+  const showFooterNext = step <= 1;
 
   const uppercaseButtonClass = uppercaseApplied
     ? "inline-flex items-center gap-2 rounded-2xl border border-[#C9943B] bg-[#C9943B]/85 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black transition hover:border-[#F1B45A] hover:bg-[#F1B45A] hover:text-black"
     : "inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-black/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:border-white/40 hover:text-white";
+
+  const handleAcceptDesign = () => {
+    setStep(3 as Step);
+  };
+
+  const handleFinalizeSelection = () => {
+    if (!selectedGenerationId) return;
+    // Placeholder for future integration with checkout or contact flow.
+    console.info("Selected generation", selectedGenerationId);
+  };
+
+  useEffect(() => {
+    if (step !== 3) {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+        loadingIntervalRef.current = null;
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    setLoadingSeconds(0);
+    loadingIntervalRef.current = setInterval(() => {
+      setLoadingSeconds(prev => Math.min(prev + 1, TYPICAL_SECONDS));
+    }, 1000);
+
+    loadingTimeoutRef.current = setTimeout(() => {
+      setStep(4 as Step);
+    }, TYPICAL_SECONDS * 1000);
+
+    return () => {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+        loadingIntervalRef.current = null;
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    };
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== 4) return;
+    if (activeGenerations.length === 0) return;
+    setSelectedGenerationId(prev => {
+      if (prev && activeGenerations.some(item => item.id === prev)) return prev;
+      return activeGenerations[0].id;
+    });
+  }, [step, activeGenerations]);
+
+  const loadingProgress = Math.min(loadingSeconds / TYPICAL_SECONDS, 1);
+  const loadingBarWidth = Math.max(loadingProgress, 0.05);
 
   return (
     <main className="min-h-dvh px-4 py-10 text-white md:px-8">
@@ -351,6 +424,7 @@ export default function NameBuilder() {
                     </button>
                     <button
                       type="button"
+                      onClick={handleAcceptDesign}
                       className="flex-1 rounded-2xl bg-blue-500 px-5 py-3 text-base font-semibold text-white transition hover:bg-blue-400"
                     >
                       accept
@@ -359,6 +433,86 @@ export default function NameBuilder() {
                 </div>
               </div>
             )}
+
+            {step === 3 && (
+              <div className="flex flex-1 flex-col justify-between space-y-14">
+                <div className="rounded-3xl border border-white/12 bg-black/40 px-6 py-6">
+                  <h2 className="text-lg font-semibold">Drafting your imagination...</h2>
+                  <p className="mt-2 text-sm text-white/60">We're sculpting shimmering concepts based on your direction.</p>
+                  <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {activeGenerations.map(option => (
+                      <div key={option.id} className="aspect-square rounded-[28px] border border-white/10 bg-gradient-to-br from-white/5 via-white/10 to-white/5">
+                        <div className="h-full w-full animate-pulse rounded-[26px] bg-gradient-to-br from-slate-800 via-slate-900 to-black" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-black/60">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#2C48FF] to-[#0CB6DD] transition-[width] duration-500 ease-out"
+                      style={{ width: `${Math.min(loadingBarWidth, 1) * 100}%` }}
+                    />
+                    <div className="relative flex h-11 items-center justify-center px-6 text-sm font-semibold uppercase tracking-[0.3em] text-[#FBD377]">
+                      {loadingSeconds}s elapsed
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-white/60">Generations typically take {TYPICAL_SECONDS} seconds.</p>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-8">
+                <div className="rounded-3xl border border-white/12 bg-black/35 px-6 py-6">
+                  <h2 className="text-lg font-semibold text-center sm:text-left">Choose your favourite</h2>
+                  <p className="mt-2 text-sm text-white/60 text-center sm:text-left">Select the draft that matches your vision best. We'll refine the winner for production.</p>
+                  <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {activeGenerations.map(option => {
+                      const isSelected = selectedGenerationId === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setSelectedGenerationId(option.id)}
+                          className={`group relative aspect-square overflow-hidden rounded-[28px] border ${isSelected ? "border-[3px] border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.45)]" : "border-white/15"} bg-black/45 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400`}
+                          aria-pressed={isSelected}
+                        >
+                          <Image
+                            src={option.src}
+                            alt={option.label}
+                            fill
+                            sizes="(max-width: 640px) 160px, 200px"
+                            className="object-cover transition duration-500 group-hover:scale-105"
+                          />
+                          <span className="pointer-events-none absolute inset-0 rounded-[28px] border border-white/10 bg-gradient-to-b from-transparent via-transparent to-black/40" aria-hidden />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2 as Step)}
+                    className="flex-1 rounded-2xl border border-white/15 bg-black/45 px-5 py-3 text-base font-medium transition hover:border-white/35"
+                  >
+                    back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFinalizeSelection}
+                    disabled={!selectedGenerationId}
+                    className={`flex-1 rounded-2xl px-5 py-3 text-base font-semibold transition ${selectedGenerationId ? "bg-blue-500 text-white hover:bg-blue-400" : "cursor-not-allowed border border-white/15 bg-black/45 text-white/50"}`}
+                  >
+                    continue
+                  </button>
+                </div>
+              </div>
+            )}
+
           </section>
 
           <footer className="mt-12 flex items-center justify-between">
@@ -373,7 +527,7 @@ export default function NameBuilder() {
               ))}
             </div>
 
-            {step < STEP_LABELS.length - 1 ? (
+            {showFooterNext ? (
               <button
                 type="button"
                 onClick={handleNext}
@@ -387,6 +541,7 @@ export default function NameBuilder() {
               <span className="w-16" aria-hidden />
             )}
           </footer>
+
         </div>
       </div>
     </main>
