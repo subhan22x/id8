@@ -4,6 +4,7 @@ export type EmblemAsset = {
   src: string;
 };
 
+// To add a new pendant style, drop the asset in public/pendants and add an entry here.
 export type PendantStyle = {
   id: string;
   label: string;
@@ -11,6 +12,7 @@ export type PendantStyle = {
   accent?: string;
 };
 
+// Update this list when new pendant previews are available.
 export const pendantStyles: PendantStyle[] = [
   { id: "deja", label: "Deja", src: "/pendants/deja.png" },
   { id: "lexy", label: "Lexy", src: "/pendants/lexy.png" },
@@ -20,6 +22,7 @@ export const pendantStyles: PendantStyle[] = [
   { id: "neiko", label: "Neiko", src: "/pendants/neiko.png" }
 ];
 
+// Emblem art for Name step; drop new PNGs in public/emblems then add them here.
 export const emblems: EmblemAsset[] = [
   { id: "moneybag", label: "Money Bag", src: "/emblems/moneybag emblem.png" },
   { id: "heart", label: "Heart", src: "/emblems/heart emblem.png" },

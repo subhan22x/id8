@@ -4,35 +4,36 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import EmblemPicker from "./components/EmblemPicker";
-import { pendantStyles, type PendantStyle } from "@/lib/assets";
+import { pendantStyles, emblems, type PendantStyle } from "@/lib/assets";
 
 type GoldTone = "yg" | "rg" | "wg";
 type Step = 0 | 1 | 2;
 
-const stepLabels: readonly string[] = ["Name 1", "Name 2", "Name 3"];
-
+const STEP_LABELS: readonly string[] = ["Name 1", "Name 2", "Name 3"];
+const MAX_NAME_LINES = 2; // limit for inputs on the first step
 const goldToneMeta: Record<GoldTone, { label: string; from: string; to: string }> = {
   yg: { label: "Yellow gold", from: "#F8DC8B", to: "#C78A29" },
   rg: { label: "Rose gold", from: "#F4C1B0", to: "#B66344" },
   wg: { label: "White gold", from: "#F6F7FA", to: "#A4AEBC" }
 };
 
-const pendantColumns: PendantStyle[][] = pendantStyles.reduce((columns, style, index) => {
-  if (index % 2 === 0) {
-    columns.push([style]);
-  } else {
-    const last = columns[columns.length - 1];
-    if (last) {
-      last.push(style);
+// helper to present styles in a swipeable two-row carousel
+// Break styles into swipeable two-row columns for the style picker.
+const buildPendantColumns = (styles: readonly PendantStyle[], perColumn = 2) =>
+  styles.reduce<PendantStyle[][]>((columns, style, index) => {
+    if (index % perColumn === 0) {
+      columns.push([style]);
+    } else {
+      const last = columns.at(-1);
+      if (last) last.push(style);
     }
-  }
-  return columns;
-}, [] as PendantStyle[][]);
+    return columns;
+  }, []);
 
 export default function NameBuilder() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(0);
-  const [lines, setLines] = useState<string[]>([""]);
+  const [step, setStep] = useState<Step>(0); // which screen of the flow the user is on
+  const [lines, setLines] = useState<string[]>([""]); // name inputs are stored as an array for easy add/remove // name inputs are stored as an array for easy add/remove
   const [styleId, setStyleId] = useState<string>(pendantStyles[0]?.id ?? "");
   const [includeEmblem, setIncludeEmblem] = useState(true);
   const [emblemId, setEmblemId] = useState<string | null>(null);
@@ -41,9 +42,13 @@ export default function NameBuilder() {
   const [secondaryTone, setSecondaryTone] = useState<GoldTone>("rg");
   const [diamondQuality, setDiamondQuality] = useState<"vs" | "vvs">("vvs");
 
+  const pendantColumns = buildPendantColumns(pendantStyles); // update lib/assets.ts to add/remove styles
   const activeStyle = pendantStyles.find(style => style.id === styleId) ?? pendantStyles[0];
 
-  const canAddLine = lines.length < 2;
+  const selectedEmblem = emblemId ? emblems.find(asset => asset.id === emblemId) ?? null : null;
+  const emblemSummary = includeEmblem ? (selectedEmblem ? selectedEmblem.label : "None selected") : "Not included";
+
+  const canAddLine = lines.length < MAX_NAME_LINES;
   const secondaryDisabled = goldMode === "solid";
   const hasPrimaryName = lines[0]?.trim().length > 0;
 
@@ -73,7 +78,7 @@ export default function NameBuilder() {
     if (step === 0 && !hasPrimaryName) {
       return;
     }
-    if (step < stepLabels.length - 1) {
+    if (step < STEP_LABELS.length - 1) {
       setStep(prev => ((prev + 1) as Step));
     }
   };
@@ -93,7 +98,7 @@ export default function NameBuilder() {
           </button>
 
           <header>
-            <p className="text-xs uppercase tracking-[0.35em] text-white/70">{stepLabels[step]}</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-white/70">{STEP_LABELS[step]}</p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-[2.25rem]">Dream it first</h1>
             <p
               className="mt-1 text-2xl italic text-white/90"
@@ -145,6 +150,7 @@ export default function NameBuilder() {
                 </div>
 
                 <div>
+                  {/* Style selector cards; add art or adjust layout here. */}
                   <h2 className="text-lg font-semibold">Choose Style</h2>
                   <p className="mt-1 text-sm text-white/60">Swipe through to explore different pendant looks.</p>
                   <div className="mt-4 -mx-1 overflow-x-auto pb-2">
@@ -153,12 +159,15 @@ export default function NameBuilder() {
                         <div key={columnIndex} className="grid min-w-[164px] grid-rows-2 gap-3 snap-start">
                           {column.map(style => {
                             const isActive = style.id === styleId;
+                            const stateClass = isActive
+                              ? "border-[4px] border-[#67D7FF] shadow-[0_18px_36px_rgba(90,190,255,0.55)] hover:border-[#8EE6FF]"
+                              : "border border-[#C9943B] hover:border-[#F1B45A]";
                             return (
                               <button
                                 key={style.id}
                                 onClick={() => setStyleId(style.id)}
                                 type="button"
-                                className={`group relative h-36 w-full overflow-hidden rounded-[30px] border border-white/15 bg-black/40 transition hover:border-white/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 ${isActive ? "border-[3px] border-blue-400 shadow-[0_0_0_2px_rgba(0,120,255,0.35)]" : ""}`}
+                                className={`group relative h-36 w-full overflow-hidden rounded-[30px] bg-black/40 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 ${stateClass}`}
                                 aria-pressed={isActive}
                               >
                                 <Image
@@ -185,6 +194,7 @@ export default function NameBuilder() {
 
             {step === 1 && (
               <div className="space-y-8">
+                {/* Emblem step: toggle, picker, gold tones. */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-lg font-semibold">Emblem</h2>
@@ -246,6 +256,7 @@ export default function NameBuilder() {
 
             {step === 2 && (
               <div className="space-y-8">
+                {/* Final confirmation screen details. */}
                 <div>
                   <h2 className="text-lg font-semibold">Diamond Quality</h2>
                   <div className="mt-4 flex gap-3">
@@ -297,6 +308,10 @@ export default function NameBuilder() {
                         </dd>
                       </div>
                       <div className="flex justify-between">
+                        <dt>Emblem</dt>
+                        <dd className="font-medium text-white/90">{emblemSummary}</dd>
+                      </div>
+                      <div className="flex justify-between">
                         <dt>Diamond</dt>
                         <dd className="font-medium text-white/90">{diamondQuality.toUpperCase()}</dd>
                       </div>
@@ -326,7 +341,7 @@ export default function NameBuilder() {
             <span className="w-16" aria-hidden />
 
             <div className="flex items-center justify-center gap-2">
-              {stepLabels.map((_, index) => (
+              {STEP_LABELS.map((_, index) => (
                 <span
                   key={index}
                   className={`h-2.5 w-2.5 rounded-full transition ${index === step ? "bg-blue-400" : "bg-white/25"}`}
@@ -334,7 +349,7 @@ export default function NameBuilder() {
               ))}
             </div>
 
-            {step < stepLabels.length - 1 ? (
+            {step < STEP_LABELS.length - 1 ? (
               <button
                 type="button"
                 onClick={handleNext}
