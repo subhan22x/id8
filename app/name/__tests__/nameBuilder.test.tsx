@@ -29,7 +29,7 @@ describe("NameBuilder interactions", () => {
     const nextButton = screen.getByRole("button", { name: /next/i });
     expect(nextButton).toBeDisabled();
 
-    const primaryInput = screen.getByPlaceholderText(/your name/i);
+    const primaryInput = screen.getByPlaceholderText(/text on pendant/i);
     await typeText(user, primaryInput, "Aurora");
     expect(nextButton).toBeEnabled();
 
@@ -50,7 +50,7 @@ describe("NameBuilder interactions", () => {
     const user = userEvent.setup();
     await renderBuilder();
 
-    const primaryInput = screen.getByPlaceholderText(/your name/i);
+    const primaryInput = screen.getByPlaceholderText(/text on pendant/i);
     await typeText(user, primaryInput, "Aurora");
     await click(user, screen.getByRole("button", { name: /next/i }));
 
@@ -69,7 +69,7 @@ describe("NameBuilder interactions", () => {
     const user = userEvent.setup();
     await renderBuilder();
 
-    const primaryInput = screen.getByPlaceholderText(/your name/i);
+    const primaryInput = screen.getByPlaceholderText(/text on pendant/i);
     await typeText(user, primaryInput, "Aurora");
     await click(user, screen.getByRole("button", { name: /next/i }));
 

@@ -34,6 +34,7 @@ export default function NameBuilder() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0); // which screen of the flow the user is on
   const [lines, setLines] = useState<string[]>([""]); // name inputs are stored as an array for easy add/remove // name inputs are stored as an array for easy add/remove
+  const [uppercaseApplied, setUppercaseApplied] = useState(false);
   const [styleId, setStyleId] = useState<string>(pendantStyles[0]?.id ?? "");
   const [includeEmblem, setIncludeEmblem] = useState(true);
   const [emblemId, setEmblemId] = useState<string | null>(null);
@@ -54,16 +55,24 @@ export default function NameBuilder() {
 
   const updateLine = (value: string, index: number) => {
     setLines(prev => prev.map((entry, idx) => (idx === index ? value : entry)));
+    setUppercaseApplied(false);
   };
 
   const addLine = () => {
     if (canAddLine) {
       setLines(prev => [...prev, ""]);
+      setUppercaseApplied(false);
     }
   };
 
   const removeLine = (index: number) => {
     setLines(prev => prev.filter((_, idx) => idx !== index));
+    setUppercaseApplied(false);
+  };
+
+  const uppercaseLines = () => {
+    setLines(prev => prev.map(entry => entry.toUpperCase()));
+    setUppercaseApplied(true);
   };
 
   const handleBack = () => {
@@ -84,6 +93,10 @@ export default function NameBuilder() {
   };
 
   const isNextDisabled = step === 0 && !hasPrimaryName;
+
+  const uppercaseButtonClass = uppercaseApplied
+    ? "inline-flex items-center gap-2 rounded-2xl border border-[#C9943B] bg-[#C9943B]/85 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-black transition hover:border-[#F1B45A] hover:bg-[#F1B45A] hover:text-black"
+    : "inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-black/45 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/70 transition hover:border-white/40 hover:text-white";
 
   return (
     <main className="min-h-dvh px-4 py-10 text-white md:px-8">
@@ -112,14 +125,14 @@ export default function NameBuilder() {
             {step === 0 && (
               <div className="space-y-7">
                 <div>
-                  <label className="text-sm font-medium tracking-wide text-white/70">Your name</label>
+                  <label className="text-sm font-medium tracking-wide text-white/70">Text on Pendant</label>
                   <div className="mt-3 space-y-3">
                     {lines.map((value, index) => (
                       <div key={index} className="flex items-center gap-3">
                         <input
                           value={value}
                           onChange={event => updateLine(event.target.value, index)}
-                          placeholder={index === 0 ? "your name..." : "add another line"}
+                          placeholder={index === 0 ? "text on pendant..." : "add another line"}
                           className="flex-1 rounded-2xl border border-white/15 bg-black/45 px-4 py-3 text-base outline-none transition focus:border-white/40"
                         />
                         <div className="flex items-center gap-2">
@@ -146,6 +159,17 @@ export default function NameBuilder() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={uppercaseLines}
+                      aria-label="Convert all text to uppercase"
+                      aria-pressed={uppercaseApplied}
+                      className={uppercaseButtonClass}
+                    >
+                      All Uppercase
+                    </button>
                   </div>
                 </div>
 
