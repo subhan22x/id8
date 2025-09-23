@@ -250,36 +250,36 @@ export default function NameBuilder() {
                   {/* Style selector cards; add art or adjust layout here. */}
                   <h2 className="text-lg font-semibold">Choose Style</h2>
                   <p className="mt-1 text-sm text-white/60">Swipe through to explore different pendant looks.</p>
-                  <div className="mt-4 -mx-1 overflow-x-auto pb-2">
-                    <div className="flex snap-x snap-mandatory gap-3 px-1">
+                  <div className="mt-4 -mx-0.5 overflow-x-auto pb-2">
+                    <div className="flex snap-x snap-mandatory gap-1.5 px-0">
                       {pendantColumns.map((column, columnIndex) => (
-                        <div key={columnIndex} className="grid min-w-[164px] grid-rows-2 gap-3 snap-start">
+                        <div key={columnIndex} className="grid min-w-[192px] grid-rows-2 gap-3 snap-start">
                           {column.map(style => {
                             const isActive = style.id === styleId;
                             const stateClass = isActive
-                              ? "border-[4px] border-[#67D7FF] shadow-[0_18px_36px_rgba(90,190,255,0.55)] hover:border-[#8EE6FF]"
-                              : "border border-[#C9943B] hover:border-[#F1B45A]";
+                              ? "border-[4px] border-[#C5934F] shadow-[0_18px_36px_rgba(113,69,31,0.45)] hover:border-[#E3A86A]"
+                              : "border border-[#71451F] hover:border-[#986035]";
                             return (
                               <button
                                 key={style.id}
                                 onClick={() => setStyleId(style.id)}
                                 type="button"
-                                className={`group relative h-36 w-full overflow-hidden rounded-[30px] bg-black/40 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 ${stateClass}`}
+                                className={`group relative h-[184px] w-[184px] overflow-hidden rounded-[30px] bg-black/40 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 ${stateClass}`}
                                 aria-pressed={isActive}
                               >
                                 <Image
                                   src={style.src}
                                   alt={`${style.label} pendant style`}
                                   fill
-                                  sizes="(max-width: 640px) 160px, 200px"
+                                  sizes="(max-width: 640px) 210px, 260px"
                                   className="object-cover object-center transition duration-500 group-hover:scale-105"
                                 />
-                                <span className="pointer-events-none absolute inset-0 rounded-[30px] border border-white/12 bg-gradient-to-b from-transparent via-transparent to-black/35" aria-hidden />
+                                <span className="pointer-events-none absolute inset-0 rounded-[30px] border border-[#71451F]/60 bg-gradient-to-b from-transparent via-transparent to-black/35" aria-hidden />
                               </button>
                             );
                           })}
                           {column.length === 1 && (
-                            <div className="h-36 w-full rounded-[30px] border border-transparent" aria-hidden />
+                            <div className="h-[184px] w-[184px] rounded-[30px] border border-transparent" aria-hidden />
                           )}
                         </div>
                       ))}
@@ -375,7 +375,7 @@ export default function NameBuilder() {
 
                 <div>
                   <h3 className="text-sm uppercase tracking-[0.35em] text-white/60">Drafting your imagination...</h3>
-                  <div className="mt-4 rounded-3xl border border-white/12 bg-black/50 p-4">
+                  <div className="mt-4 rounded-3xl border border-[#71451F]/60 bg-black/50 p-4">
                     <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-black/70">
                       {activeStyle && (
                         <Image
@@ -436,7 +436,7 @@ export default function NameBuilder() {
 
             {step === 3 && (
               <div className="flex flex-1 flex-col justify-between space-y-14">
-                <div className="rounded-3xl border border-white/12 bg-black/40 px-6 py-6">
+                <div className="rounded-3xl border border-[#71451F]/60 bg-black/40 px-6 py-6">
                   <h2 className="text-lg font-semibold">Drafting your imagination...</h2>
                   <p className="mt-2 text-sm text-white/60">We're sculpting shimmering concepts based on your direction.</p>
                   <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -465,7 +465,7 @@ export default function NameBuilder() {
 
             {step === 4 && (
               <div className="space-y-8">
-                <div className="rounded-3xl border border-white/12 bg-black/35 px-6 py-6">
+                <div className="rounded-3xl border border-[#71451F]/60 bg-black/35 px-6 py-6">
                   <h2 className="text-lg font-semibold text-center sm:text-left">Choose your favourite</h2>
                   <p className="mt-2 text-sm text-white/60 text-center sm:text-left">Select the draft that matches your vision best. We'll refine the winner for production.</p>
                   <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -483,7 +483,7 @@ export default function NameBuilder() {
                             src={option.src}
                             alt={option.label}
                             fill
-                            sizes="(max-width: 640px) 160px, 200px"
+                            sizes="(max-width: 640px) 210px, 260px"
                             className="object-cover transition duration-500 group-hover:scale-105"
                           />
                           <span className="pointer-events-none absolute inset-0 rounded-[28px] border border-white/10 bg-gradient-to-b from-transparent via-transparent to-black/40" aria-hidden />
@@ -587,3 +587,12 @@ function ToneSelector({
     </div>
   );
 }
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MetalColor {
+  ROSE_GOLD
+  WHITE_GOLD
+  YELLOW_GOLD
+}
+
+enum Emblem {
+  NONE
+  CROWN
+  HEART
+  SPADE
+  BUTTERFLY
+  MONEYBAG
+}
+
+enum StyleName {
+  PROMPT4
+  LEXY
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  storeName String
+  createdAt DateTime @default(now())
+  prompts   Prompt[]
+}
+
+model Prompt {
+  id             Int         @id @default(autoincrement())
+  userId         Int
+  styleName      StyleName
+  twoTone        Boolean    @default(false)
+  primaryColor   MetalColor
+  secondaryColor MetalColor?
+  emblem         Emblem     @default(NONE)
+  jsonOverrides  Json
+  createdAt      DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt], map: "Prompt_user_created_idx")
+}

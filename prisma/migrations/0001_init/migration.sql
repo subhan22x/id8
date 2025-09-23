@@ -1,0 +1,21 @@
+-- Create user and prompt tables
+CREATE TABLE IF NOT EXISTS "User" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "storeName" TEXT NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "Prompt" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "userId" INTEGER NOT NULL,
+  "styleName" TEXT NOT NULL,
+  "twoTone" BOOLEAN NOT NULL DEFAULT false,
+  "primaryColor" TEXT NOT NULL,
+  "secondaryColor" TEXT,
+  "emblem" TEXT NOT NULL DEFAULT 'NONE',
+  "jsonOverrides" TEXT NOT NULL DEFAULT '{}',
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Prompt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "Prompt_user_created_idx" ON "Prompt" ("userId", "createdAt");
