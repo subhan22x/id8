@@ -23,8 +23,14 @@ enum Emblem {
 }
 
 enum StyleName {
-  PROMPT4
+  DEJA
+  GATTI
+  JAIDA
+  JHON
+  JWAE
+  KING
   LEXY
+  NEIKO
 }
 
 enum GoldCombo {
