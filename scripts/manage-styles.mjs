@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const stylesPath = path.resolve(process.cwd(), "data/pendant-styles.json");
+const prismaSchemaPath = path.resolve(process.cwd(), "prisma/schema.prisma");
 
 if (!fs.existsSync(stylesPath)) {
   console.error(`Cannot find ${stylesPath}.`);
@@ -64,6 +65,7 @@ function writeStyles(styles) {
   const sorted = [...styles].sort((a, b) => a.label.localeCompare(b.label));
   const json = JSON.stringify(sorted, null, 2);
   fs.writeFileSync(stylesPath, `${json}\n`, "utf8");
+  syncStyleEnum(sorted);
 }
 
 function handleList() {
@@ -133,4 +135,62 @@ Commands:
   remove --id=ID            Delete a style.
 `);
   process.exit(exitWithError ? 1 : 0);
+}
+
+function syncStyleEnum(styles) {
+  if (!fs.existsSync(prismaSchemaPath)) {
+    console.warn(`Skipping enum sync: ${prismaSchemaPath} not found.`);
+    return;
+  }
+
+  const enumValues = styles.map(style => formatEnumName(style.id));
+
+  const duplicates = enumValues.filter((value, index) => enumValues.indexOf(value) !== index);
+  if (duplicates.length) {
+    console.error(
+      `Cannot sync StyleName enum because the following IDs map to duplicate enum names: ${[...new Set(duplicates)].join(
+        ", "
+      )}`
+    );
+    process.exit(1);
+  }
+
+  const schema = fs.readFileSync(prismaSchemaPath, "utf8");
+  const enumRegex = /enum StyleName\s*{[\s\S]*?}/m;
+  const replacement = `enum StyleName {\n${enumValues.map(value => `  ${value}`).join("\n")}\n}`;
+
+  if (!enumRegex.test(schema)) {
+    console.error(`Could not find StyleName enum definition inside ${prismaSchemaPath}.`);
+    process.exit(1);
+  }
+
+  const nextSchema = schema.replace(enumRegex, replacement);
+  if (nextSchema !== schema) {
+    fs.writeFileSync(prismaSchemaPath, nextSchema, "utf8");
+    console.log(`Synced StyleName enum with ${enumValues.length} pendant style(s).`);
+  }
+}
+
+function formatEnumName(id) {
+  const normalized = id.trim();
+  if (!normalized) {
+    console.error("Style id must be a non-empty string.");
+    process.exit(1);
+  }
+
+  let candidate = normalized
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_]/g, "_")
+    .toUpperCase();
+
+  if (!candidate) {
+    console.error(`Style id "${id}" cannot be converted into a valid enum name.`);
+    process.exit(1);
+  }
+
+  if (/^[0-9]/.test(candidate)) {
+    candidate = `_${candidate}`;
+  }
+
+  return candidate;
 }
