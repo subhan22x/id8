@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, MetalColor, Emblem, StyleName, Prompt, User } from "@prisma/client";
+import { PrismaClient, Prisma, GoldCombo, Emblem, StyleName, Prompt, User } from "@prisma/client";
 
 // Ensure a single PrismaClient instance during development to avoid creating multiple SQLite connections.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -24,21 +24,10 @@ export function getUser(id: number): Promise<User | null> {
 type CreatePromptInput = {
   userId: number;
   styleName: StyleName;
-  twoTone: boolean;
-  primaryColor: MetalColor;
-  secondaryColor?: MetalColor | null;
+  goldCombo: GoldCombo;
   emblem: Emblem;
   jsonOverrides?: JsonLike;
 };
-
-function validateTwoTone({ twoTone, secondaryColor }: { twoTone: boolean; secondaryColor?: MetalColor | null }) {
-  if (twoTone && !secondaryColor) {
-    throw new Error("secondaryColor is required when twoTone is true");
-  }
-  if (!twoTone && secondaryColor) {
-    throw new Error("secondaryColor must be omitted when twoTone is false");
-  }
-}
 
 function serializeOverrides(overrides?: JsonLike): Prisma.InputJsonValue {
   if (overrides === undefined) {
@@ -59,8 +48,7 @@ function serializeOverrides(overrides?: JsonLike): Prisma.InputJsonValue {
 }
 
 export async function createPrompt(input: CreatePromptInput): Promise<Prompt> {
-  validateTwoTone(input);
-  const { userId, styleName, twoTone, primaryColor, secondaryColor, emblem } = input;
+  const { userId, styleName, goldCombo, emblem } = input;
   const jsonOverrides = serializeOverrides(input.jsonOverrides);
 
   await ensureUserExists(userId);
@@ -69,9 +57,7 @@ export async function createPrompt(input: CreatePromptInput): Promise<Prompt> {
     data: {
       userId,
       styleName,
-      twoTone,
-      primaryColor,
-      secondaryColor: twoTone ? (secondaryColor as MetalColor | undefined) ?? null : null,
+      goldCombo,
       emblem,
       jsonOverrides
     }
@@ -105,4 +91,4 @@ export function listPrompts({ limit = 50, offset = 0 }: ListPromptsOptions = {})
   });
 }
 
-export type { MetalColor, Emblem, StyleName } from "@prisma/client";
+export type { GoldCombo, Emblem, StyleName } from "@prisma/client";

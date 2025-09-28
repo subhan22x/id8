@@ -6,18 +6,19 @@ import Image from "next/image";
 import EmblemPicker from "./components/EmblemPicker";
 import { pendantStyles, emblems, type PendantStyle } from "@/lib/assets";
 
-type GoldTone = "yg" | "rg" | "wg";
 type Step = 0 | 1 | 2 | 3 | 4;
 
 const STEP_LABELS: readonly string[] = ["Name 1", "Name 2", "Name 3", "Name 5", "Name 6"];
 const TYPICAL_SECONDS = 20;
-const MAX_NAME_LINES = 2; // limit for inputs on the first step
-const goldToneMeta: Record<GoldTone, { label: string; from: string; to: string }> = {
-  yg: { label: "Yellow gold", from: "#F8DC8B", to: "#C78A29" },
-  rg: { label: "Rose gold", from: "#F4C1B0", to: "#B66344" },
-  wg: { label: "White gold", from: "#F6F7FA", to: "#A4AEBC" }
-};
+type GoldComboKey = "YELLOW_WHITE" | "ROSE_WHITE" | "WHITE";
 
+const GOLD_COMBOS: ReadonlyArray<{ id: GoldComboKey; label: string; summary: string }> = [
+  { id: "YELLOW_WHITE", label: "Yellow + White Gold", summary: "Yellow gold + White gold" },
+  { id: "ROSE_WHITE", label: "Rose + White Gold", summary: "Rose gold + White gold" },
+  { id: "WHITE", label: "White Gold", summary: "White gold" }
+];
+
+const MAX_NAME_LINES = 2; // limit for inputs on the first step
 // helper to present styles in a swipeable two-row carousel
 // Break styles into swipeable two-row columns for the style picker.
 const buildPendantColumns = (styles: readonly PendantStyle[], perColumn = 2) =>
@@ -39,9 +40,7 @@ export default function NameBuilder() {
   const [styleId, setStyleId] = useState<string>(pendantStyles[0]?.id ?? "");
   const [includeEmblem, setIncludeEmblem] = useState(true);
   const [emblemId, setEmblemId] = useState<string | null>(null);
-  const [goldMode, setGoldMode] = useState<"solid" | "twoTone">("solid");
-  const [primaryTone, setPrimaryTone] = useState<GoldTone>("yg");
-  const [secondaryTone, setSecondaryTone] = useState<GoldTone>("rg");
+  const [goldCombo, setGoldCombo] = useState<GoldComboKey>("YELLOW_WHITE");
   const [diamondQuality, setDiamondQuality] = useState<"vs" | "vvs">("vvs");
   const [loadingSeconds, setLoadingSeconds] = useState(0);
   const [selectedGenerationId, setSelectedGenerationId] = useState<string | null>(null);
@@ -64,8 +63,9 @@ export default function NameBuilder() {
   const selectedEmblem = emblemId ? emblems.find(asset => asset.id === emblemId) ?? null : null;
   const emblemSummary = includeEmblem ? (selectedEmblem ? selectedEmblem.label : "None selected") : "Not included";
 
+  const activeGoldCombo = GOLD_COMBOS.find(option => option.id === goldCombo) ?? GOLD_COMBOS[0];
+
   const canAddLine = lines.length < MAX_NAME_LINES;
-  const secondaryDisabled = goldMode === "solid";
   const hasPrimaryName = lines[0]?.trim().length > 0;
 
   const updateLine = (value: string, index: number) => {
@@ -317,35 +317,24 @@ export default function NameBuilder() {
                 />
 
                 <div>
-                  <h2 className="text-lg font-semibold text-center">Gold Color</h2>
-                  <div className="mt-4 flex justify-center gap-3">
-                    {(["solid", "twoTone"] as const).map(mode => {
-                      const isActive = goldMode === mode;
+                  <h2 className="text-lg font-semibold text-center">Gold Finish</h2>
+                  <p className="mt-1 text-sm text-white/60 text-center">Hand-picked combinations that balance warmth and contrast.</p>
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {GOLD_COMBOS.map(option => {
+                      const isActive = goldCombo === option.id;
                       return (
                         <button
-                          key={mode}
+                          key={option.id}
                           type="button"
-                          onClick={() => setGoldMode(mode)}
-                          className={`min-w-[96px] rounded-2xl border border-white/15 px-4 py-2 text-sm capitalize transition hover:border-white/35 ${isActive ? "border-[3px] border-blue-400 bg-blue-500/20" : "bg-black/45"}`}
+                          onClick={() => setGoldCombo(option.id)}
+                          aria-pressed={isActive}
+                          className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-[3px] border-blue-400 bg-blue-500/20 text-white" : "border-[#71451F] bg-black/45 text-white/80 hover:border-[#986035]"}`}
+
                         >
-                          {mode === "twoTone" ? "two tone" : mode}
+                          {option.label}
                         </button>
                       );
                     })}
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-1 gap-6">
-                    <ToneSelector
-                      label="Primary"
-                      value={primaryTone}
-                      onChange={setPrimaryTone}
-                    />
-                    <ToneSelector
-                      label="Secondary"
-                      value={secondaryTone}
-                      onChange={setSecondaryTone}
-                      disabled={secondaryDisabled}
-                    />
                   </div>
                 </div>
               </div>
@@ -399,10 +388,7 @@ export default function NameBuilder() {
                       </div>
                       <div className="flex justify-between">
                         <dt>Gold</dt>
-                        <dd className="font-medium text-white/90">
-                          {goldToneMeta[primaryTone].label}
-                          {goldMode === "twoTone" ? ` + ${goldToneMeta[secondaryTone].label}` : ""}
-                        </dd>
+                        <dd className="font-medium text-white/90">{activeGoldCombo.summary}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt>Emblem</dt>
@@ -547,52 +533,4 @@ export default function NameBuilder() {
     </main>
   );
 }
-
-function ToneSelector({
-  label,
-  value,
-  onChange,
-  disabled = false
-}: {
-  label: string;
-  value: GoldTone;
-  onChange: (tone: GoldTone) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className={disabled ? "opacity-40" : ""}>
-      <p className="text-sm uppercase tracking-[0.3em] text-white/60">{label}</p>
-      <div className="mt-3 flex gap-3">
-        {(Object.keys(goldToneMeta) as GoldTone[]).map(option => {
-          const meta = goldToneMeta[option];
-          const isActive = value === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => !disabled && onChange(option)}
-              className={`flex min-w-[96px] flex-col items-center gap-2 rounded-2xl border border-white/15 px-3 py-3 text-xs font-medium uppercase tracking-wide transition hover:border-white/35 ${isActive ? "border-[3px] border-blue-400 bg-blue-500/15" : "bg-black/45"}`}
-            >
-              <span
-                className="h-10 w-full rounded-2xl"
-                style={{
-                  background: `linear-gradient(180deg, ${meta.from} 0%, ${meta.to} 100%)`
-                }}
-              />
-              {meta.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-
-
-
-
-
-
-
 

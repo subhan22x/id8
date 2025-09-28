@@ -46,7 +46,7 @@ describe("NameBuilder interactions", () => {
     expect(nextButton).toBeEnabled();
   });
 
-  it("keeps the selected emblem when switching gold color modes", async () => {
+  it("keeps the selected emblem when switching gold combinations", async () => {
     const user = userEvent.setup();
     await renderBuilder();
 
@@ -58,11 +58,17 @@ describe("NameBuilder interactions", () => {
     await click(user, emblemButton);
     expect(emblemButton).toHaveAttribute("aria-pressed", "true");
 
-    await click(user, screen.getByRole("button", { name: /two tone/i }));
-    expect(emblemButton).toHaveAttribute("aria-pressed", "true");
+    const comboLabels = [
+      /^Yellow \+ White Gold$/i,
+      /^Rose \+ White Gold$/i,
+      /^White Gold$/i
+    ];
 
-    await click(user, screen.getByRole("button", { name: /solid/i }));
-    expect(emblemButton).toHaveAttribute("aria-pressed", "true");
+    for (const label of comboLabels) {
+      const comboButton = screen.getByRole("button", { name: label });
+      await click(user, comboButton);
+      expect(emblemButton).toHaveAttribute("aria-pressed", "true");
+    }
   });
 
   it("restores emblem selection after toggling the emblem switch", async () => {

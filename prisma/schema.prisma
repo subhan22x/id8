@@ -27,6 +27,12 @@ enum StyleName {
   LEXY
 }
 
+enum GoldCombo {
+  YELLOW_WHITE
+  ROSE_WHITE
+  WHITE
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   storeName String
@@ -35,15 +41,13 @@ model User {
 }
 
 model Prompt {
-  id             Int         @id @default(autoincrement())
-  userId         Int
-  styleName      StyleName
-  twoTone        Boolean    @default(false)
-  primaryColor   MetalColor
-  secondaryColor MetalColor?
-  emblem         Emblem     @default(NONE)
-  jsonOverrides  Json
-  createdAt      DateTime   @default(now())
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  styleName    StyleName
+  goldCombo    GoldCombo  @default(YELLOW_WHITE)
+  emblem       Emblem     @default(NONE)
+  jsonOverrides Json      @default("{}")
+  createdAt    DateTime   @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
